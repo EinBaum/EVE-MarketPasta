@@ -1,0 +1,1 @@
+tcc -o "bin/MarketPasta.exe" main.c -luser32
