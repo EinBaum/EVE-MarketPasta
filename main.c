@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#define VERSION	"1.0"
+
 // Other stuff
 #define MSG_CUSTOM_UPDATE	(WM_APP + 1)
 #define NUMBER_BUFFER		(100)
@@ -281,8 +283,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		exit(1);
 	}
 
-	hWnd = CreateWindowEx(0, className, "MarketPasta", WS_OVERLAPPEDWINDOW,
-		100, 100, 220, 220,
+	hWnd = CreateWindowEx(0, className, "MarketPasta " VERSION, WS_OVERLAPPEDWINDOW,
+		100, 100, 230, 220,
 		NULL, NULL, NULL, NULL);
 	if (!hWnd) {
 		Show(L"Failed to create a window.\n");
