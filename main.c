@@ -121,7 +121,7 @@ void ModifyClipboard(HWND hWnd, WCHAR *str) {
 	newPrice = CalcNewPrice(oldPrice);
 
 	ShowPrices(oldPrice, newPrice);
-	wsprintfW(newStr, L"%" PRIu64 ",%" PRIu64, newPrice/100, newPrice%100);
+	wsprintfW(newStr, L"%" PRIu64 ",%02" PRIu64, newPrice/100, newPrice%100);
 
 
 	if (OpenClipboard(hWnd)) {
