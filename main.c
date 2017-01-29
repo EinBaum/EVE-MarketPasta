@@ -12,15 +12,18 @@
 #define IDC_ENABLED	101
 #define IDC_MINRAND	102
 #define IDC_MAXRAND	103
+#define IDC_ROUND	104
 
 HFONT defaultFont = NULL;
 
 HWND hWnd = NULL;
-HWND hWndEnabled, hWndStatic1, hWndStatic2, hWndMinRand, hWndMaxRand,
+HWND hWndEnabled, hWndRound, hWndStatic1, hWndStatic2,
+	hWndMinRand, hWndMaxRand,
 	hWndOld, hWndNew;
 HWND hWndNextViewer = NULL;
 
 BOOL progEnabled = TRUE;
+BOOL progRound = TRUE;
 BOOL ignoreChange = FALSE;
 
 // Popup message box
@@ -93,6 +96,14 @@ DWORD64 CalcNewPrice(DWORD64 oldPrice) {
 	}
 }
 
+DWORD64 RoundPrice(DWORD64 oldPrice) {
+	if (oldPrice < 10000) {
+		return oldPrice;
+	} else {
+		return (oldPrice / 1000) * 1000;
+	}
+}
+
 // Show old and new price on the interface
 void ShowPrices(DWORD64 oldPrice, DWORD64 newPrice) {
 	WCHAR buff[NUMBER_BUFFER];
@@ -119,6 +130,10 @@ void ModifyClipboard(HWND hWnd, WCHAR *str) {
 
 	oldPrice = PriceFromMarketData(str);
 	newPrice = CalcNewPrice(oldPrice);
+
+	if (progRound) {
+		newPrice = RoundPrice(newPrice);
+	}
 
 	ShowPrices(oldPrice, newPrice);
 	wsprintfW(newStr, L"%" PRIu64 ",%02" PRIu64, newPrice/100, newPrice%100);
@@ -172,14 +187,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				5, 95, 135, 18, hWnd, (HMENU)IDC_MAXRAND,
 				GetModuleHandleW(NULL), NULL);
 
+			hWndRound = CreateWindowW(L"button", L"Round",
+				WS_CHILD | WS_VISIBLE | BS_CHECKBOX | WS_TABSTOP,
+				5, 120, 150, 20, hWnd, (HMENU)IDC_ROUND,
+				GetModuleHandleW(NULL), NULL);
+
 			hWndOld = CreateWindowW(L"static", L"",
 				WS_CHILD | WS_VISIBLE,
-				5, 130, 190, 18, hWnd, 0,
+				5, 150, 190, 18, hWnd, 0,
 				GetModuleHandleW(NULL), NULL);
 
 			hWndNew = CreateWindowW(L"static", L"",
 				WS_CHILD | WS_VISIBLE,
-				5, 150, 190, 18, hWnd, 0,
+				5, 170, 190, 18, hWnd, 0,
 				GetModuleHandleW(NULL), NULL);
 
 			defaultFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -188,10 +208,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SendMessageW(hWndStatic2,		WM_SETFONT, (WPARAM)defaultFont, TRUE);
 			SendMessageW(hWndMinRand,		WM_SETFONT, (WPARAM)defaultFont, TRUE);
 			SendMessageW(hWndMaxRand,		WM_SETFONT, (WPARAM)defaultFont, TRUE);
+			SendMessageW(hWndRound,			WM_SETFONT, (WPARAM)defaultFont, TRUE);
 			SendMessageW(hWndOld,			WM_SETFONT, (WPARAM)defaultFont, TRUE);
 			SendMessageW(hWndNew,			WM_SETFONT, (WPARAM)defaultFont, TRUE);
 
 			PostMessage(hWndEnabled, BM_SETCHECK, BST_CHECKED, 0);
+			PostMessage(hWndRound,   BM_SETCHECK, BST_CHECKED, 0);
 
 			break;
 
@@ -206,6 +228,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 							} else {
 								CheckDlgButton(hWnd, IDC_ENABLED, BST_CHECKED);
 								progEnabled = TRUE;
+							}
+							break;
+					}
+					break;
+				case IDC_ROUND:
+					switch (HIWORD(wParam)) {
+						case BN_CLICKED:
+							if (IsDlgButtonChecked(hWnd, IDC_ROUND)) {
+								CheckDlgButton(hWnd, IDC_ROUND, BST_UNCHECKED);
+								progRound = FALSE;
+							} else {
+								CheckDlgButton(hWnd, IDC_ROUND, BST_CHECKED);
+								progRound = TRUE;
 							}
 							break;
 					}
@@ -284,7 +319,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	}
 
 	hWnd = CreateWindowEx(0, className, "MarketPasta " VERSION, WS_OVERLAPPEDWINDOW,
-		100, 100, 230, 220,
+		100, 100, 230, 250,
 		NULL, NULL, NULL, NULL);
 	if (!hWnd) {
 		Show(L"Failed to create a window.\n");
